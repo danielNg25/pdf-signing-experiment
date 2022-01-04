@@ -74,6 +74,8 @@ function App() {
             setSignImage(imageBytes);
         });
     };
+
+    //Add signature to Metadata
     const setSign = async () => {
         //load PDF file
         // const response = await fetch("http://ceur-ws.org/Vol-2753/paper28.pdf");
@@ -88,6 +90,8 @@ function App() {
         pdfDoc.getInfoDict().set(SIGNATURE, PDFHexString.fromText(sign));
         alert("Set signature successfully");
     };
+
+    //Get signature from metadata
     const showSignature = () => {
         const signature = pdfDoc.getInfoDict().lookup(SIGNATURE);
         if (signature) {
@@ -100,6 +104,7 @@ function App() {
         const pdfBytes = await pdfDoc.save();
         download(pdfBytes, "signed_pdf.pdf", "application/pdf");
     };
+    //extract attached file
     const extract = async () => {
         const attachments = extractAttachments(pdfDoc);
         console.log(attachments);
@@ -107,6 +112,7 @@ function App() {
         console.log(file);
         download(file.data, file.name, "image/jpeg");
     };
+    //attach file(image)
     const attachImage = () => {
         if (!pdfDoc || !signImage) {
             return;
@@ -129,12 +135,16 @@ function App() {
     //     // console.log(doc)
     //     // console.log(content);
     // }
+
+    //hash rawdata with SHA256
     const logHash = async () =>{
         let copyDoc = await PDFDocument.create();
+        const contentPages = await copyDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
 
-        let [copyPage] = await copyDoc.copyPages(pdfDoc, [0]);
-
-        copyDoc.addPage(copyPage)
+        for (let idx = 0, len = contentPages.length; idx < len; idx++) {
+            copyDoc.addPage(contentPages[idx]);
+        }
+        
 
         copyDoc.setCreationDate(new Date(1995, 11, 17, 3, 24, 0))
         copyDoc.setModificationDate(new Date(1995, 11, 17, 3, 24, 0))
@@ -144,6 +154,7 @@ function App() {
         console.log(hashedFile);
         return hashedFile;
     }
+
     const sign = async () => {
         //const bytes = await logHash();
         //const key = await importPrivateKey(PRIVATE_KEY);
@@ -151,6 +162,8 @@ function App() {
         //const sign = await window.crypto.subtle.sign(algorithm, PRIVATE_KEY, bytes)
         //console.log(sign);
     };
+
+    //Sign and Verify with RSA-SHA256
     //References http://kjur.github.io/jsrsasign/api/symbols/KJUR.crypto.Signature.html#init
     const doSign = async ()=> {
         // var rsa = new jsrsasign.RSAKey();
